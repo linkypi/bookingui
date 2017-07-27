@@ -98,7 +98,6 @@ export default {
       }
     }
   },
-
   methods: {
     startHacking () {
       this.$notify({
@@ -113,7 +112,13 @@ export default {
         that.form.date = new Date(that.form.date);
         that.$refs[formName].validate((valid) => {
             if (valid) {
-                alert('submit!');
+                 this.$http.post('http://localhost:3000/add',that.form)
+                 .then((response) => {
+                    console.log(eval(response));
+                  }).catch(function(response) {
+                    console.log(response);
+                  });
+
             } else {
                 console.log('error submit!!');
                 return false;
@@ -123,6 +128,14 @@ export default {
     reset(formName) {
         this.$refs[formName].resetFields();
     }
+  },
+  created: function() {
+      this.$http.jsonp('http://localhost:3000/test',{ credentials: true })
+      .then((response) => {
+        console.log(eval(response));
+      }).catch(function(response) {
+        console.log(response);
+      });
   }
 }
 </script>
