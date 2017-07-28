@@ -1,12 +1,31 @@
 <template>
   <div id="app">
     <h1 style="text-align:center">{{ title }}</h1>
-<!--     <el-row :gutter="10">
-      <el-col :xs="8" :sm="6" :md="4" :lg="3"><div class="grid-content bg-purple"></div></el-col>
-      <el-col :xs="4" :sm="6" :md="8" :lg="9"><div class="grid-content bg-purple-light"></div></el-col>
-      <el-col :xs="4" :sm="6" :md="8" :lg="9"><div class="grid-content bg-purple"></div></el-col>
-      <el-col :xs="8" :sm="6" :md="4" :lg="3"><div class="grid-content bg-purple-light"></div></el-col>
-    </el-row> -->
+
+    <table align="center" class='el-table'>
+        <thead>
+          <th style="text-align: center;" v-for="item of weeks">{{item.title}}</th>
+        </thead>
+        <tbody>
+          <tr v-for="item of tableData">
+            <td v-for="value in item" @mouseover="overShow($event)"
+             @mouseout="outHide($event)" @click="click($event)">
+                <div class="cell" style="width:80px;">{{value}}</div>
+            </td>
+          </tr>
+        </tbody>
+    </table>
+    <el-table align="center"
+      :data="tableData"
+      style="width: 100%">
+
+      <el-table-column v-for="item of weeks"
+        :prop="item.name"
+        :label="item.title"
+        width="80">
+      </el-table-column>
+      
+    </el-table>
     <el-form ref="form" :inline="true" :rules="rules" :model="form" label-width="80px">
       <el-form-item label="日期" prop="date">
         <el-date-picker type="date" placeholder="选择日期" :picker-options="datefilter"
@@ -62,7 +81,15 @@
 export default {
   data () {
     return {
+      url: 'http://localhost:3000/',
       title: '皇庭会议室预订系统',
+      bgcolor:'',
+      weeks:[{'title':'',"name":'','index':0 },{'title':'一',"name":'d1'},
+       {'title':'二',"name":'d2'},{'title':'三',"name":'d3'},
+       {'title':'四',"name":'d4'},{'title':'五',"name":'d5'}],
+      tableData:[
+        
+      ],
       form:{
         username: '',
         department: '',
@@ -99,26 +126,18 @@ export default {
     }
   },
   methods: {
-    startHacking () {
-      this.$notify({
-        title: 'It Works',
-        message: 'We have laid the groundwork for you. Now it\'s your time to build something epic!',
-        duration: 6000
-      })
-    },
     onSubmit(formName) {
         console.log('submit!');
         let that = this;
         that.form.date = new Date(that.form.date);
         that.$refs[formName].validate((valid) => {
             if (valid) {
-                 this.$http.post('http://localhost:3000/add',that.form)
+                 this.$http.post(this.url + 'add',that.form)
                  .then((response) => {
                     console.log(eval(response));
                   }).catch(function(response) {
                     console.log(response);
                   });
-
             } else {
                 console.log('error submit!!');
                 return false;
@@ -127,10 +146,48 @@ export default {
     },
     reset(formName) {
         this.$refs[formName].resetFields();
+    },
+    checktime(timestr){
+        var date = new Date().toLocaleDateString();
+        var current = new Date(date +' '+ timestr);
+        if( current > new Date(date + ' 12:00') && current < new Date(date +' 13:30')){
+          return false;
+        }
+         if( current > new Date(date + ' 18:00')){
+          return false;
+        }
+        return true;
+    },
+    overShow (e) {
+      this.bgcolor = e.target.style.backgroundColor;
+      e.target.style.backgroundColor = "green";
+    },
+    outHide (e) {
+      e.target.style.backgroundColor = this.bgcolor;
+    },
+    click(e){
+      e.target.style.backgroundColor = "green";
     }
   },
   created: function() {
-      this.$http.jsonp('http://localhost:3000/test',{ credentials: true })
+      var hour = 9,minutes = 0;
+
+      for (var i = 20; i > 0; i--) {
+        var hourstr = hour/10 >= 1? hour.toString():('0' + hour);
+        var minstr = minutes/10 > 1? minutes.toString():('0'+ minutes);
+        var timestr = hourstr+':'+minstr;
+
+        if(this.checktime(timestr)){
+          var item = {'time':'09:00','d1':'','d2':'','d3':'','d4':'','d5':''};
+          item.time = timestr;
+          this.tableData.push(item);
+        }
+
+        minutes+=30;
+        if(minutes==60){ minutes = 0; hour+=1; }
+      }
+      
+      this.$http.jsonp(this.url +'test',{ credentials: true })
       .then((response) => {
         console.log(eval(response));
       }).catch(function(response) {
@@ -150,6 +207,12 @@ export default {
   }
   .el-select{
     width:193px;
+  }
+  .el-table td, .el-table th {
+    height: 10px;
+    min-width: 0;
+    text-overflow: ellipsis;
+    vertical-align: middle;
   }
 
   @media (min-width: 490px) {
